@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Suncire Player</title>
+    <title>Suncire Player (Simple)</title>
     <style>
         body,
         html {
@@ -14,10 +14,7 @@
             height: 100vh;
         }
 
-        #player {
-            position: absolute;
-            top: 0;
-            left: 0;
+        iframe {
             width: 100%;
             height: 100%;
             border: none;
@@ -26,59 +23,20 @@
 </head>
 
 <body>
-    <div id="player"></div>
+    <div id="container"></div>
 
     <script>
-        // Pega o ID do video da URL (ex: index.html?v=XqZsoesa55w)
         const urlParams = new URLSearchParams(window.location.search);
         const videoId = urlParams.get('v');
-        const volume = urlParams.get('vol') || 100;
 
         if (videoId) {
-            // Carrega API do YouTube
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            // URL "Embed" definitiva com todos os hacks de desbloqueio
+            // Adicionamos 'origin' apontando para o próprio github pages pra enganar o youtube
+            const finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&origin=${window.location.origin}`;
 
-            var player;
-            function onYouTubeIframeAPIReady() {
-                player = new YT.Player('player', {
-                    height: '100%',
-                    width: '100%',
-                    videoId: videoId,
-                    playerVars: {
-                        'autoplay': 1,
-                        'controls': 0,     // Sem botões
-                        'disablekb': 1,    // Sem teclado
-                        'fs': 0,           // Sem botão fullscreen
-                        'loop': 1,         // Loop infinito
-                        'modestbranding': 1,
-                        'rel': 0,          // Sem videos relacionados
-                        'playlist': videoId, // Necessário para o loop funcionar
-                        'iv_load_policy': 3 // Sem anotações
-                    },
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': onPlayerStateChange
-                    }
-                });
-            }
-
-            function onPlayerReady(event) {
-                event.target.setVolume(volume);
-                event.target.playVideo();
-            }
-
-            function onPlayerStateChange(event) {
-                // Se o vídeo acabar (state 0), toca de novo (garantia extra de loop)
-                if (event.data === YT.PlayerState.ENDED) {
-                    player.playVideo();
-                }
-            }
+            document.getElementById('container').innerHTML = `<iframe src="${finalUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
         } else {
-            console.error("Nenhum Video ID fornecido (?v=ID)");
-            document.body.innerHTML = "<h1 style='color:white; text-align:center; font-family:sans-serif;'>Suncire Player: Aguardando Vídeo...</h1>";
+            document.body.innerHTML = "<h1 style='color:white;text-align:center;font-family:sans-serif;margin-top:20%'>Suncire: Sem Vídeo ID</h1>";
         }
     </script>
 </body>
