@@ -2,42 +2,83 @@
 <html>
 
 <head>
-    <title>Suncire Player (Simple)</title>
+    <meta charset="UTF-8">
     <style>
-        body,
-        html {
+        * {
             margin: 0;
             padding: 0;
             overflow: hidden;
+        }
+
+        body {
             background: #000;
             width: 100vw;
             height: 100vh;
         }
 
-        iframe {
+        #player {
             width: 100%;
             height: 100%;
-            border: none;
         }
     </style>
 </head>
 
 <body>
-    <div id="container"></div>
-
+    <div id="player"></div>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const videoId = urlParams.get('v');
+        const params = new URLSearchParams(window.location.search);
+        const url = params.get('url');
+        let ytPlayer = null;
+        let currentVolume = 100;
 
-        if (videoId) {
-            // URL "Embed" definitiva com todos os hacks de desbloqueio
-            // Adicionamos 'origin' apontando para o próprio github pages pra enganar o youtube
-            const finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&origin=${window.location.origin}`;
-
-            document.getElementById('container').innerHTML = `<iframe src="${finalUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        } else {
-            document.body.innerHTML = "<h1 style='color:white;text-align:center;font-family:sans-serif;margin-top:20%'>Suncire: Sem Vídeo ID</h1>";
+        function getYouTubeID(url) {
+            if (url.includes('v=')) return url.split('v=')[1].split('&')[0];
+            if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
+            return null;
         }
+
+        function onYouTubeIframeAPIReady() {
+            const videoId = getYouTubeID(url);
+            if (!videoId) {
+                document.body.innerHTML = '<h1 style="color:white">Invalid YouTube URL</h1>';
+                return;
+            }
+
+            ytPlayer = new YT.Player('player', {
+                videoId: videoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    loop: 1,
+                    playlist: videoId,
+                    mute: 0,
+                    modestbranding: 1,
+                    rel: 0
+                },
+                events: {
+                    onReady: (event) => {
+                        event.target.setVolume(currentVolume);
+                        event.target.playVideo();
+                    }
+                }
+            });
+        }
+
+        // Atualizar volume quando hash mudar
+        window.addEventListener('hashchange', () => {
+            const newVol = parseInt(window.location.hash.replace('#vol=', '')) || 100;
+            currentVolume = newVol;
+            if (ytPlayer && ytPlayer.setVolume) {
+                ytPlayer.setVolume(newVol);
+                console.log('[SUNCIRE PLAYER] Volume atualizado:', newVol);
+            }
+        });
+
+        // Aplicar volume inicial
+        const initialVol = parseInt(window.location.hash.replace('#vol=', '')) || 100;
+        currentVolume = initialVol;
+        console.log('[SUNCIRE PLAYER] Volume inicial:', initialVol);
     </script>
 </body>
 
