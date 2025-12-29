@@ -31,12 +31,18 @@
         const url = params.get('url');
         let ytPlayer = null;
         let currentVolume = 100;
+        let playerReady = false;
 
         function getYouTubeID(url) {
             if (url.includes('v=')) return url.split('v=')[1].split('&')[0];
             if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
             return null;
         }
+
+        // Aplicar volume inicial do hash
+        const initialVol = parseInt(window.location.hash.replace('#vol=', '')) || 100;
+        currentVolume = initialVol;
+        console.log('[SUNCIRE PLAYER] Volume inicial:', initialVol);
 
         function onYouTubeIframeAPIReady() {
             const videoId = getYouTubeID(url);
@@ -52,14 +58,21 @@
                     controls: 0,
                     loop: 1,
                     playlist: videoId,
-                    mute: 0,
                     modestbranding: 1,
                     rel: 0
                 },
                 events: {
                     onReady: (event) => {
+                        playerReady = true;
                         event.target.setVolume(currentVolume);
                         event.target.playVideo();
+                        console.log('[SUNCIRE PLAYER] Player pronto! Volume:', currentVolume);
+                    },
+                    onStateChange: (event) => {
+                        // Garantir loop
+                        if (event.data === YT.PlayerState.ENDED) {
+                            event.target.playVideo();
+                        }
                     }
                 }
             });
@@ -69,16 +82,14 @@
         window.addEventListener('hashchange', () => {
             const newVol = parseInt(window.location.hash.replace('#vol=', '')) || 100;
             currentVolume = newVol;
-            if (ytPlayer && ytPlayer.setVolume) {
+
+            if (playerReady && ytPlayer && ytPlayer.setVolume) {
                 ytPlayer.setVolume(newVol);
                 console.log('[SUNCIRE PLAYER] Volume atualizado:', newVol);
+            } else {
+                console.log('[SUNCIRE PLAYER] Player não pronto, volume será aplicado quando carregar');
             }
         });
-
-        // Aplicar volume inicial
-        const initialVol = parseInt(window.location.hash.replace('#vol=', '')) || 100;
-        currentVolume = initialVol;
-        console.log('[SUNCIRE PLAYER] Volume inicial:', initialVol);
     </script>
 </body>
 
